@@ -1,0 +1,37 @@
+const express = require('express');
+const http = require('http');
+const WebSocket = require('ws');
+const PORT = process.env.PORT || 8080;
+
+const app = express();
+const server = http.createServer(app);
+const wss = new WebSocket.Server({ server, path: '/ws' });
+
+wss.on('connection', (ws) => {
+  console.log('🔗 New client connected');
+
+  ws.on('message', (message) => {
+    console.log(`📨 Received: ${message}`);
+
+    // שלח חזרה לכל הלקוחות (ברודקאסט)
+    wss.clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(message);
+      }
+    });
+  });
+
+  ws.on('close', () => {
+    console.log('❌ Client disconnected');
+  });
+
+  ws.send('👋 Welcome to WebSocket Server!');
+});
+
+app.get('/', (req, res) => {
+  res.send('✅ WebSocket server is running.');
+});
+
+server.listen(PORT, () => {
+  console.log(`🚀 Server listening on port ${PORT}`);
+});
